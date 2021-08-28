@@ -15,29 +15,35 @@ import java.lang.Thread.sleep
 import java.util.*
 import java.util.logging.Handler
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 
 class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
-    lateinit var animation: AnimationDrawable
     lateinit var playerBitmap:Bitmap
+    var playerScore = 0
     var touchX = 0f
     var touchY = 0f
     var playerY = 0f
+    var slideY = 0f
     val playerWidth = 364f
     val playerHeight = 457f
     var playerJumping = false
     var playerSliding = false
     var playerRunState = 1
     var msalX = 0f
+    var msalY = 0f
     val msalWidth = 432f
     val msalHeight = 518f
     var msalRunState = 1
+    var enemy = 0
     val gravity = -5
     var jumpV = 30
     var groundX = 0f
     lateinit var msalBitmap: Bitmap
+    lateinit var flyBitmap: Bitmap
     lateinit var groundBitmap: Bitmap
     private val paintWhite: Paint = Paint()
+    private val paintBlack: Paint = Paint()
     private var GAME_RUNNING = true
 
     private fun dpToPx(dp: Int): Float {
@@ -69,23 +75,33 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     init {
         paintWhite.color =Color.WHITE
         paintWhite.style =Paint.Style.FILL
+
+        paintBlack.color = Color.BLACK
+        paintBlack.style = Paint.Style.FILL
+        paintBlack.textSize =100f
+        paintBlack.textAlign = Paint.Align.CENTER
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         msalX = width - msalWidth + 50f
-        if (::playerBitmap.isInitialized)playerBitmap.recycle()
-        if (::msalBitmap.isInitialized)msalBitmap.recycle()
         playerBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
         msalBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+        flyBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
         groundBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
-        playerBitmap = getBitmap(context, R.drawable.ic_r1f1)!!
+        playerBitmap = getBitmap(context, R.drawable.ic_r1f7)!!
         msalBitmap = getBitmap(context, R.drawable.ic_msal1)!!
+        flyBitmap = getBitmap(context, R.drawable.ic_fly1)!!
         groundBitmap = getBitmap(context, R.drawable.ic_ground)!!
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+
+        canvas?.drawText("$playerScore", 100f, 100f, paintBlack)
+        groundX -= 10
+        if (groundX <= -dpToPx(100))
+            groundX = 0f
         canvas?.drawBitmap(groundBitmap, groundX, height - 205f, paintWhite)
         canvas?.drawBitmap(groundBitmap, dpToPx(100) + groundX, height - 205f, paintWhite)
         canvas?.drawBitmap(groundBitmap, dpToPx(200) + groundX, height - 205f, paintWhite)
@@ -96,9 +112,24 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
         canvas?.drawBitmap(groundBitmap, dpToPx(700) + groundX, height - 205f, paintWhite)
         canvas?.drawBitmap(groundBitmap, dpToPx(800) + groundX, height - 205f, paintWhite)
         canvas?.drawBitmap(groundBitmap, dpToPx(900) + groundX, height - 205f, paintWhite)
-        canvas?.drawBitmap(playerBitmap, 0f, height - playerHeight - playerY, paintWhite)
-        canvas?.drawBitmap(msalBitmap, msalX + 50f, height - playerHeight, paintWhite)
 
+        //runAnimation()
+        canvas?.drawBitmap(playerBitmap, 0f, height - playerHeight - playerY, paintWhite)
+
+        msalX -= 40
+        msalAnimation()
+        canvas?.drawBitmap(if(enemy == 0)msalBitmap else flyBitmap, msalX + 50f, height - playerHeight - msalY, paintWhite)
+        if (msalX <= 0) {
+            msalX = width.toFloat()
+            enemy = (0..2).random()
+            if (enemy == 2) msalY = 120f
+            else if (enemy == 1) msalY = -50f
+            else msalY = 0f
+        }
+
+        if (!GAME_RUNNING){
+            canvas?.drawText("GAME OVER",(width/2).toFloat(), (height/2).toFloat(), paintBlack)
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -116,6 +147,11 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                         }
                     }
 
+                }
+                else{
+                    GAME_RUNNING = true
+                    playerScore = 0
+                    PlayerThread().start()
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -153,47 +189,46 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 if (!playerJumping and !playerSliding){
                     runAnimation()
                     postInvalidate()
-                    sleep(15)
+                    sleep(5)
                 }
                 else if (playerJumping){
                     jumpAnimation()
                     postInvalidate()
-                    sleep(45)
+                    sleep(100)
                 }
                 else if (playerSliding){
                     slideAnimation()
                     postInvalidate()
-                    sleep(300)
-                    playerSliding = false
-                    playerY = 0f
-                    postInvalidate()
+                    sleep(100)
                 }
+                if (msalX<20){
+                    if (enemy == 0){
+                        if (!playerJumping)
+                            GAME_RUNNING = false
+                    } else if (enemy == 2){
+                        if (playerJumping)
+                            GAME_RUNNING = false
+                    } else {
+                        if (!playerSliding)
+                            GAME_RUNNING = false
+                    }
+                }
+                playerScore += 1
             }
         }
     }
+    /*
     inner class msalThread: Thread(){
         override fun run() {
             while (GAME_RUNNING){
-                msalAnimation()
-                msalX -= 20
+                //msalAnimation()
                 postInvalidate()
-                if (msalX <= 0)
-                    msalX = width.toFloat()
                 sleep(15)
             }
         }
     }
-    inner class groundThread: Thread(){
-        override fun run() {
-            while (GAME_RUNNING){
-                groundX -= 10
-                postInvalidate()
-                if (groundX <= -dpToPx(100))
-                    groundX = 0f
-                sleep(15)
-            }
-        }
-    }
+
+     */
 
     private fun msalAnimation() {
         when (msalRunState){
@@ -228,7 +263,6 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 msalRunState = 1
                 return}
         }
-
     }
 
     fun runAnimation(){
@@ -297,9 +331,21 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     }
 
     fun slideAnimation(){
-        playerBitmap = getBitmap(context, R.drawable.ic_r1f1)!!
-        playerY = -dpToPx(50)
+        playerBitmap = getBitmap(context, R.drawable.ic_slide1)!!
+        slideY += dpToPx(jumpV)
+        jumpV += gravity
+        playerY = -100f
+        if (slideY < 0){
+            slideY = 0f
+            playerY = 0f
+            jumpV = 30
+            playerSliding = false
+        }
         //sleep(100)
         //playerSliding = false
+    }
+
+    fun gameRunning(){
+
     }
 }

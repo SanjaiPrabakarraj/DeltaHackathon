@@ -13,9 +13,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        binding.gameView.PlayerThread().priority = Thread.MAX_PRIORITY
         binding.gameView.PlayerThread().start()
-        binding.gameView.msalThread().start()
-        binding.gameView.groundThread().start()
+        //binding.gameView.msalThread().start()
+        //binding.gameView.groundThread().start()
     }
 
 }
