@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:drawable="@drawable/ic_msal1"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal2"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal3"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal4"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal5"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal6"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal7"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal8"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal9"
+        android:duration="70"/>
+    <item
+        android:drawable="@drawable/ic_msal10"
+        android:duration="70"/>
+
+</animation-list>

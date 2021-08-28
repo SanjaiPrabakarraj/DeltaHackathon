@@ -1,0 +1,2 @@
+rootProject.name = "DeltaHackathon"
+include ':app'
