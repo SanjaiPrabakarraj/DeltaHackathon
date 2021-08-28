@@ -30,6 +30,7 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     var playerJumping = false
     var playerSliding = false
     var playerRunState = 1
+    var playerJumpState = 1
     var msalX = 0f
     var msalY = 0f
     val msalWidth = 432f
@@ -44,6 +45,9 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     lateinit var groundBitmap: Bitmap
     private val paintWhite: Paint = Paint()
     private val paintBlack: Paint = Paint()
+    private val joystickPaint: Paint = Paint()
+    var joystickX = 0f
+    var joystickY = 0f
     private var GAME_RUNNING = true
 
     private fun dpToPx(dp: Int): Float {
@@ -80,6 +84,10 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
         paintBlack.style = Paint.Style.FILL
         paintBlack.textSize =100f
         paintBlack.textAlign = Paint.Align.CENTER
+
+        joystickPaint.color = Color.BLACK
+        joystickPaint.style = Paint.Style.FILL
+        joystickPaint.alpha = 50
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -127,6 +135,9 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
             else msalY = 0f
         }
 
+        canvas?.drawCircle(300f, 500f, 150f, joystickPaint)
+        canvas?.drawCircle(300f, 500f + joystickY, 50f, joystickPaint)
+
         if (!GAME_RUNNING){
             canvas?.drawText("GAME OVER",(width/2).toFloat(), (height/2).toFloat(), paintBlack)
         }
@@ -155,14 +166,11 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                /*
                 if (GAME_RUNNING) {
-                    if (!playerSliding and !playerJumping){
+                    if ((touchX in (250f..350f)) and (touchY in (250f..350f))){
                         handleMove(event)
                     }
                 }
-
-                 */
             }
             MotionEvent.ACTION_UP -> {
 
@@ -172,14 +180,12 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     }
 
     private fun handleMove(event: MotionEvent) {
-        var direction = (touchY - event.y)
-        if (direction > 10){
-            playerJumping = true
-            jumpAnimation()
-        }
-        else if (direction < -10) {
-            playerSliding = true
-            slideAnimation()
+        joystickY -= (touchY - event.y)
+        touchY = event.y
+        joystickY = when{
+            touchY - 50 <0 -> touchY - 50
+            touchY + 50 > 100 -> touchY + 50
+            else ->joystickY
         }
     }
 
@@ -233,6 +239,7 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
     private fun msalAnimation() {
         when (msalRunState){
             1 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal1)!!
+                flyBitmap = getBitmap(context, R.drawable.ic_fly1)!!
                 msalRunState += 1
                 return}
             2 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal2)!!
@@ -242,6 +249,7 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 msalRunState += 1
                 return}
             4 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal4)!!
+                flyBitmap = getBitmap(context, R.drawable.ic_fly2)!!
                 msalRunState += 1
                 return}
             5 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal5)!!
@@ -251,6 +259,7 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 msalRunState += 1
                 return}
             7 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal7)!!
+                flyBitmap = getBitmap(context, R.drawable.ic_fly1)!!
                 msalRunState += 1
                 return}
             8 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal8)!!
@@ -260,6 +269,7 @@ class GameView(context: Context, attrs: AttributeSet) : View(context, attrs)  {
                 msalRunState += 1
                 return}
             10 -> {msalBitmap = getBitmap(context, R.drawable.ic_msal10)!!
+                flyBitmap = getBitmap(context, R.drawable.ic_fly2)!!
                 msalRunState = 1
                 return}
         }
